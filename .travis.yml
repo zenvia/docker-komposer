@@ -1,1 +1,3 @@
 language: groovy
+after_success:
+- ./gradlew uploadArchives
