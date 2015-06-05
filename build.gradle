@@ -52,10 +52,12 @@ artifacts {
 }
 
 ext {
-    if (!ossrhUsername) {
+    if (!this.hasProperty('ossrhUsername')) {
+        println '--------------------------------'
+        println 'do not have the property'
         ossrhUsername = System.getenv('NEXUS_USER')
     }
-    if (!ossrhPassword) {
+    if (!this.hasProperty('ossrhPassword')) {
         ossrhPassword = System.getenv('NEXUS_PASS')
     }
 }
