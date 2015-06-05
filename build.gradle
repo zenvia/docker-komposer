@@ -1,0 +1,95 @@
+group 'com.zenvia.komposer'
+version '1.0'
+
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'jacoco'
+apply plugin: 'maven'
+
+repositories {
+    mavenCentral()
+    maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+test {
+    finalizedBy jacocoTestReport
+}
+
+dependencies {
+
+    compile 'org.codehaus.groovy:groovy-all:2.3.11'
+    compile 'org.yaml:snakeyaml:1.15'
+    compile 'com.spotify:docker-client:2.7.7'
+    compile group: 'org.slf4j', name:'slf4j-api', version: '1.6.4'
+    compile group: 'junit', name: 'junit', version: '4.11'
+
+    testCompile "org.spockframework:spock-core:1.0-groovy-2.4"
+
+    testRuntime group: 'ch.qos.logback', name:'logback-classic', version: '1.0.0'
+    testRuntime group: 'ch.qos.logback', name:'logback-core', version: '1.0.0'
+    testRuntime 'cglib:cglib-nodep:3.1'
+
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from tasks.javadoc.destinationDir
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
+    archives jar
+
+    archives javadocJar
+    archives sourcesJar
+}
+
+ext {
+    if (!ossrhUsername) {
+        ossrhUsername = System.getenv('NEXUS_USER')
+    }
+    if (!ossrhPassword) {
+        ossrhPassword = System.getenv('NEXUS_PASS')
+    }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "http://nexus-6d391e01.tiagodeoliveira.svc.tutum.io:8081/content/repositories/releases/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "http://nexus-6d391e01.tiagodeoliveira.svc.tutum.io:8081/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'Docker Komposer'
+                packaging 'jar'
+                description 'A port to run create docker environments based on docker-compose in Java/Groovy.'
+                url 'https://github.com/zenvia-mobile/docker-komposer'
+
+                scm {
+                    url 'scm:git@github.com/zenvia-mobile/docker-komposer.git'
+                    connection 'scm:git@github.com/zenvia-mobile/docker-komposer.git'
+                    developerConnection 'scm:git@github.com/zenvia-mobile/docker-komposer.git'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+}
