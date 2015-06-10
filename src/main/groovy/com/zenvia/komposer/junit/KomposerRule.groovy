@@ -20,7 +20,7 @@ class KomposerRule extends ExternalResource {
     }
 
     def KomposerRule(String compose, Boolean pull = true) {
-        this.runner = new KomposerRunner(pull)
+        this.runner = new KomposerRunner()
         this.composeFile = compose
         this.pull = pull
     }

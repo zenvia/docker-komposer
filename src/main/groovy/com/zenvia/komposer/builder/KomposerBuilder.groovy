@@ -60,6 +60,8 @@ class KomposerBuilder {
     }
 
     def ContainerConfig createContainerConfig(service, serviceName, namePattern, pull = true) {
+        log.info("Creating container config for [${serviceName}], pullImage = ${pull}")
+
         def builder = ContainerConfig.builder()
 
         def imageName = service.image
@@ -102,6 +104,7 @@ class KomposerBuilder {
     }
 
     def createHostConfig(service, namePattern) {
+        log.info("Creating host config...")
         def builder = HostConfig.builder()
 
         def ports = [:]
@@ -216,6 +219,7 @@ class KomposerBuilder {
     }
 
     def buildImage(path, serviceName, namePatterm) {
+        log.info("Building image on [${path}]")
         def imageName = sprintf(namePatterm, [serviceName])
         def ph = new AnsiProgressHandler()
         this.client.build(Paths.get(path), ph)
