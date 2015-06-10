@@ -3,9 +3,9 @@ package com.zenvia.komposer.builder
 import com.fasterxml.jackson.dataformat.yaml.snakeyaml.Yaml
 import com.spotify.docker.client.AnsiProgressHandler
 import com.spotify.docker.client.DockerClient
-import com.spotify.docker.client.messages.ContainerConfig
-import com.spotify.docker.client.messages.HostConfig
-import com.spotify.docker.client.messages.PortBinding
+import com.spotify.docker.client.DockerException
+import com.spotify.docker.client.ProgressHandler
+import com.spotify.docker.client.messages.*
 import groovy.util.logging.Log
 
 import java.nio.file.Paths
@@ -21,18 +21,24 @@ class KomposerBuilder {
 
     private File composeFile
     private DockerClient client
+    private hubLogin
+
+    def KomposerBuilder(DockerClient client, String hubUser, String hubPass, String hubMail) {
+        this.composeFile = composeFile
+        this.client = client
+        this.hubLogin = [user: hubUser, pass: hubPass, mail: hubMail]
+    }
 
     def KomposerBuilder(DockerClient client) {
         this.composeFile = composeFile
         this.client = client
     }
 
-    def build(File composeFile) {
+    def build(File composeFile, pull = true) {
         log.info("Building containers from ${composeFile.absolutePath}")
 
         def prefix = Paths.get(composeFile.absolutePath).parent.fileName
         def instanceId = new Random().nextInt(1000)
-        this.client.listContainers()
         def namePattern = "komposer_${prefix}_%s_${instanceId}"
 
         def compose = new Yaml().load(composeFile.text)
@@ -43,7 +49,7 @@ class KomposerBuilder {
 
             log.info "Processing service: $service"
 
-            def containerConfig = this.createContainerConfig(it.value, service, namePattern)
+            def containerConfig = this.createContainerConfig(it.value, service, namePattern, pull)
             def hostConfig = this.createHostConfig(it.value, namePattern)
             def containerName = sprintf(namePattern, [service])
 
@@ -53,11 +59,11 @@ class KomposerBuilder {
         return result
     }
 
-    def ContainerConfig createContainerConfig(service, serviceName, namePattern) {
+    def ContainerConfig createContainerConfig(service, serviceName, namePattern, pull = true) {
         def builder = ContainerConfig.builder()
 
         def imageName = service.image
-        if (imageName) {
+        if (imageName && pull) {
             this.pullImage(imageName)
         } else if (service.build) {
             imageName = this.buildImage(service.build, serviceName, namePattern)
@@ -160,10 +166,52 @@ class KomposerBuilder {
     }
 
     def pullImage(image) {
-        try {
-            this.client.pull(image)
-        } catch (Exception e) {
-            log.severe("Impossible to locate the image ${image}")
+        if (!image.contains(':')) {
+            image += ':latest'
+        }
+
+        def progress = new ProgressHandler() {
+            @Override
+            void progress(ProgressMessage message) throws DockerException {
+
+                if (message.error()) {
+                    throw new DockerException(message.error())
+                }
+
+                if (message.progressDetail() != null) {
+                    final String id = message.id();
+
+                    String progress = message.progress()
+                    if (!progress) {
+                        progress = ""
+                    }
+
+                    log.fine(sprintf("%s: %s %s%n", [id, message.status(), progress]))
+                } else {
+
+                    String value = message.stream()
+                    if (value) {
+                        value = value.trim()
+                    } else {
+                        value = message.status()
+                    }
+
+                    if (!value) {
+                        value = message.toString()
+                    }
+
+                    log.info(value)
+                }
+            }
+        }
+
+        if (this.hubLogin && this.hubLogin.user) {
+            log.info("Pulling image [${image}] using authentication...")
+            def auth = AuthConfig.builder().username(this.hubLogin.user).password(this.hubLogin.pass).email(this.hubLogin.mail).build()
+            this.client.pull(image, auth, progress)
+        } else {
+            log.info("Pulling image [${image}] without auth...")
+            this.client.pull(image, progress)
         }
     }
 

@@ -1,3 +1,2 @@
+before_install: openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in .crypto/secring.gpg.enc -out .crypto/local.secring.gpg -d
 language: groovy
-after_success:
-- ./gradlew uploadArchives

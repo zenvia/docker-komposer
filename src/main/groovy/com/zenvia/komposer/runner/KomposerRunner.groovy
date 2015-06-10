@@ -1,8 +1,14 @@
 package com.zenvia.komposer.runner
 
 import com.spotify.docker.client.DefaultDockerClient
+import com.spotify.docker.client.DockerCertificates
+import com.spotify.docker.client.DockerClient
+import com.spotify.docker.client.LogStream
 import com.zenvia.komposer.builder.KomposerBuilder
 import groovy.util.logging.Log
+import com.spotify.docker.client.DockerClient.LogsParameter
+
+import java.nio.file.Paths
 
 /**
  * @author Tiago Oliveira
@@ -20,12 +26,28 @@ class KomposerRunner {
         this.komposerBuilder = new KomposerBuilder(dockerClient)
     }
 
-    def KomposerRunner(dockerClient) {
-        this.dockerClient = dockerClient
+    def KomposerRunner(DockerClient client) {
+        this.dockerClient = client
         this.komposerBuilder = new KomposerBuilder(dockerClient)
     }
 
-    def up(String composeFile) {
+    def KomposerRunner(String dockerCfgFile) {
+
+        def props = new Properties()
+        new File(dockerCfgFile).withInputStream {
+            stream -> props.load(stream)
+        }
+
+        def certificates
+        if (props.'cert.path') {
+            certificates = DockerCertificates.builder().dockerCertPath(Paths.get(props.'cert.path')).build()
+        }
+
+        this.dockerClient = DefaultDockerClient.builder().uri(props.host).dockerCertificates(certificates).build()
+        this.komposerBuilder = new KomposerBuilder(dockerClient, props.'hub.user', props.'hub.pass', props.'hub.mail')
+    }
+
+    def up(String composeFile, pull = true) {
 
         if(!composeFile) {
             composeFile = 'docker-compose.yml'
@@ -36,7 +58,7 @@ class KomposerRunner {
 
             log.info("Starting services on ${composeFile}")
 
-            def configs = this.komposerBuilder.build(file)
+            def configs = this.komposerBuilder.build(file, pull)
 
             def result = [:]
             configs.each { config ->
@@ -51,8 +73,14 @@ class KomposerRunner {
                 def creation = this.dockerClient.createContainer(containerConfig, containerName)
                 dockerClient.startContainer(creation.id, hostConfig)
                 def info = this.dockerClient.inspectContainer(creation.id)
+                def log = this.dockerClient.logs(creation.id, LogsParameter.FOLLOW, LogsParameter.STDOUT, LogsParameter.STDERR, LogsParameter.TIMESTAMPS)
 
-                result[serviceName] = [containerId: creation.id, containerName: containerName, containerInfo: info]
+                Thread.start {
+                    //TODO get log system out
+                    log.attach(System.out, System.err)
+                }
+
+                result[serviceName] = [containerId: creation.id, containerName: containerName, containerInfo: info, containerLog: log]
             }
 
             return result
@@ -66,10 +94,12 @@ class KomposerRunner {
             def serviceName = service.key
             def containerName = service.value.containerName
             def containerId = service.value.containerId
+            def containerLog = service.value.log
 
             log.info("Stopping service ${serviceName} [${containerId} - ${containerName}]")
             try {
                 dockerClient.killContainer(containerId)
+                containerLog.close()
             } catch (Exception e) {
                 log.throwing('KomposerRunne', 'down', e)
             }

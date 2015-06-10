@@ -1,0 +1,8 @@
+node:
+  image: node
+  ports:
+  - "8080"
+  links:
+  - redis
+redis:
+  image: redis

@@ -5,6 +5,7 @@ apply plugin: 'groovy'
 apply plugin: 'idea'
 apply plugin: 'jacoco'
 apply plugin: 'maven'
+apply plugin: 'signing'
 
 repositories {
     mavenCentral()
@@ -46,28 +47,48 @@ task sourcesJar(type: Jar) {
 
 artifacts {
     archives jar
-
     archives javadocJar
     archives sourcesJar
 }
 
-ext {
-    if (!this.hasProperty('ossrhUsername')) {
-        ossrhUsername = System.getenv('NEXUS_USER')
+signing {
+    sign configurations.archives
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.allTasks.any { it instanceof Sign }) {
+        allprojects {
+            ext."signing.password" = System.getenv('ENCRYPTION_PASSWORD')
+            if (!ext."signing.password") {
+                ext."signing.password" = System.getProperty('ENCRYPTION_PASSWORD')
+            }
+        }
     }
-    if (!this.hasProperty('ossrhPassword')) {
-        ossrhPassword = System.getenv('NEXUS_PASS')
+}
+
+ext {
+    ossrhUsername = System.getenv('NEXUS_USER')
+    ossrhPassword = System.getenv('NEXUS_PASS')
+
+    if (!ossrhPassword) {
+        ossrhPassword = System.getProperty('NEXUS_PASS')
+    }
+
+    if (!ossrhUsername) {
+        ossrhUsername = System.getProperty('NEXUS_USER')
     }
 }
 
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: "http://nexus-6d391e01.tiagodeoliveira.svc.tutum.io:8081/content/repositories/releases/") {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
                 authentication(userName: ossrhUsername, password: ossrhPassword)
             }
 
-            snapshotRepository(url: "http://nexus-6d391e01.tiagodeoliveira.svc.tutum.io:8081/content/repositories/snapshots/") {
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
                 authentication(userName: ossrhUsername, password: ossrhPassword)
             }
 
@@ -87,6 +108,14 @@ uploadArchives {
                     license {
                         name 'The Apache License, Version 2.0'
                         url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'tiagodeoliveira'
+                        name 'Tiago de Oliveira'
+                        email 'tiago.oliveira@gmx.us'
                     }
                 }
             }

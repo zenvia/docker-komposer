@@ -1,7 +1,6 @@
 .gradle
 build/
 gradle-app.setting
-gradle.properties
 komposer.ipr
 komposer.iws
 docker-komposer.iml
