@@ -1,5 +1,6 @@
 package com.zenvia.komposer.junit
 
+import com.zenvia.komposer.model.Komposition
 import com.zenvia.komposer.runner.KomposerRunner
 import org.junit.rules.ExternalResource
 
@@ -39,7 +40,7 @@ class KomposerRule extends ExternalResource {
         this.runner.rm(this.runningServices)
     }
 
-    def Map<String, Map> getContainers() {
+    def Map<String, Komposition> getContainers() {
         return this.runningServices
     }
 }

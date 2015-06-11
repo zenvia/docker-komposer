@@ -168,7 +168,7 @@ class KomposerBuilder {
         return builder.build()
     }
 
-    def pullImage(image) {
+    def pullImage(String image) {
         if (!image.contains(':')) {
             image += ':latest'
         }
@@ -182,7 +182,7 @@ class KomposerBuilder {
                 }
 
                 if (message.progressDetail() != null) {
-                    final String id = message.id();
+                    final String id = message.id()
 
                     String progress = message.progress()
                     if (!progress) {
@@ -208,13 +208,19 @@ class KomposerBuilder {
             }
         }
 
-        if (this.hubLogin && this.hubLogin.user) {
-            log.info("Pulling image [${image}] using authentication...")
-            def auth = AuthConfig.builder().username(this.hubLogin.user).password(this.hubLogin.pass).email(this.hubLogin.mail).build()
-            this.client.pull(image, auth, progress)
-        } else {
-            log.info("Pulling image [${image}] without auth...")
-            this.client.pull(image, progress)
+        try {
+            if (this.hubLogin && this.hubLogin.user) {
+                log.info("Pulling image [${image}] using authentication...")
+                AuthConfig auth = AuthConfig.builder().username(this.hubLogin.user).password(this.hubLogin.pass).email(this.hubLogin.mail).build()
+                this.client.pull(image, auth, progress)
+            } else {
+                log.info("Pulling image [${image}] without auth...")
+                this.client.pull(image, progress)
+            }
+        }  catch (Exception e) {
+            def message = "Impossible to pull the image from repository, please do it manually"
+            log.severe(message)
+            throw new DockerException(message, e)
         }
     }
 

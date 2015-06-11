@@ -3,15 +3,11 @@ package com.zenvia.komposer.runner
 import com.spotify.docker.client.DefaultDockerClient
 import com.spotify.docker.client.DockerCertificates
 import com.spotify.docker.client.DockerClient
-import com.spotify.docker.client.LogMessage
-import com.spotify.docker.client.LogStream
 import com.zenvia.komposer.builder.KomposerBuilder
+import com.zenvia.komposer.model.Komposition
 import groovy.util.logging.Log
-import com.spotify.docker.client.DockerClient.LogsParameter
 
 import java.nio.file.Paths
-
-import static com.google.common.base.Charsets.UTF_8
 
 /**
  * @author Tiago Oliveira
@@ -86,7 +82,7 @@ class KomposerRunner {
                 log.info("[$containerName] Gathering container info...")
                 def info = this.dockerClient.inspectContainer(creation.id)
 
-                result[serviceName] = [containerId: creation.id, containerName: containerName, containerInfo: info] //containerLog: containerLog
+                result[serviceName] = new Komposition(containerId: creation.id, containerName: containerName, containerInfo: info)
             }
 
             return result
@@ -115,11 +111,7 @@ class KomposerRunner {
             def serviceName = service.key
             def containerName = service.value.containerName
             def containerId = service.value.containerId
-            def removeVolumes = false
-
-            if (service.value.removeVolumes) {
-                removeVolumes = service.value.removeVolumes
-            }
+            def removeVolumes = service.value.removeVolumes
 
             log.info("Removing container [${containerId} - ${containerName}] from service ${serviceName}")
 

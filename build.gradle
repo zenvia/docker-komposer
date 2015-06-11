@@ -1,9 +1,9 @@
 group 'com.zenvia.komposer'
-version '1.1'
+version '1.0'
 
 apply plugin: 'groovy'
 apply plugin: 'idea'
-//apply plugin: 'jacoco'
+apply plugin: 'jacoco'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
@@ -15,9 +15,9 @@ repositories {
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
-//test {
-//    finalizedBy jacocoTestReport
-//}
+test {
+    finalizedBy jacocoTestReport
+}
 
 dependencies {
 
