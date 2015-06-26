@@ -122,4 +122,9 @@ class KomposerRunner {
             }
         }
     }
+
+    def finish() {
+        this.dockerClient.close()
+        this.dockerClient = null
+    }
 }

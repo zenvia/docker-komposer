@@ -80,6 +80,14 @@ class KomposerBuilder {
             exposed += [port]
         }
 
+        service.ports?.each { String iPort ->
+            def port = iPort.split(':')[0]
+            if (!port.contains("/")) {
+                port = "$port/tcp"
+            }
+            exposed += [port]
+        }
+
         def envs = []
         service.environment?.each {
             envs += [it]
@@ -131,6 +139,14 @@ class KomposerBuilder {
             } else {
                 internalPort = mapping
                 externalPort = mapping
+            }
+
+            if (internalPort && !internalPort.contains('/')) {
+                internalPort += '/tcp'
+            }
+
+            if (externalPort && !externalPort.contains('/')) {
+                externalPort += '/tcp'
             }
 
             log.fine("Port mapping $internalPort -> $externalPort:$host")
@@ -212,10 +228,10 @@ class KomposerBuilder {
             if (this.hubLogin && this.hubLogin.user) {
                 log.info("Pulling image [${image}] using authentication...")
                 AuthConfig auth = AuthConfig.builder().username(this.hubLogin.user).password(this.hubLogin.pass).email(this.hubLogin.mail).build()
-                this.client.pull(image, auth, progress)
+                this.client.pull(image, auth)
             } else {
                 log.info("Pulling image [${image}] without auth...")
-                this.client.pull(image, progress)
+                this.client.pull(image)
             }
         }  catch (Exception e) {
             def message = "Impossible to pull the image from repository, please do it manually"

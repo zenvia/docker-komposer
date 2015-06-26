@@ -31,13 +31,16 @@ class KomposerRule extends ExternalResource {
         this.composeFile = composeFile
     }
 
+    @Override
     void before() throws Throwable {
         this.runningServices = this.runner.up(this.composeFile, pull)
     }
 
+    @Override
     void after() {
         this.runner.down(this.runningServices)
         this.runner.rm(this.runningServices)
+        this.runner.finish()
     }
 
     def Map<String, Komposition> getContainers() {
