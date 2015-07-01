@@ -11,7 +11,7 @@ class KomposerRule extends ExternalResource {
 
     private KomposerRunner runner
     private String composeFile
-    private runningServices
+    private Map<String, Komposition> runningServices
     private pull = true
 
     def KomposerRule(String compose, String dockerCfg, Boolean pull = true) {
@@ -45,5 +45,17 @@ class KomposerRule extends ExternalResource {
 
     def Map<String, Komposition> getContainers() {
         return this.runningServices
+    }
+
+    def stop(String serviceName){
+        def containerId = runningServices[serviceName].containerId
+        def containerInfo = this.runner.stop(containerId)
+        this.runningServices[serviceName].containerInfo = containerInfo
+    }
+
+    def start(String serviceName){
+        def containerId = runningServices[serviceName].containerId
+        def containerInfo = this.runner.start(containerId)
+        this.runningServices[serviceName].containerInfo = containerInfo
     }
 }

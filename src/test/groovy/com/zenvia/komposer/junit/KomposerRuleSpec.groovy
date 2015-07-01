@@ -1,5 +1,6 @@
 package com.zenvia.komposer.junit
 
+import com.spotify.docker.client.messages.ContainerState
 import groovy.util.logging.Log
 import spock.lang.Specification
 
@@ -28,6 +29,26 @@ class KomposerRuleSpec extends Specification {
             rule.getContainers().get('lifecyclemanager').containerInfo.networkSettings().ports()
     }
 
+    def "stopContainers"(){
+        when:
+            rule.before()
+        then:
+            rule.getContainers().get("redis").containerInfo.state().running()
+            rule.stop("redis")
+            !rule.getContainers().get("redis").containerInfo.state().running()
+    }
+
+    def "startContainers"(){
+        when:
+        rule.before()
+        then:
+        rule.getContainers().get("redis").containerInfo.state().running()
+        rule.stop("redis")
+        !rule.getContainers().get("redis").containerInfo.state().running()
+        rule.start("redis")
+        rule.getContainers().get("redis").containerInfo.state().running()
+
+    }
     def cleanupSpec() {
         rule.after()
     }
