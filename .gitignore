@@ -3,4 +3,9 @@ build/
 gradle-app.setting
 komposer.ipr
 komposer.iws
+docker-komposer.iml.idea/
+gradle/
+gradlew
+gradlew.bat
+.idea/
 docker-komposer.iml
