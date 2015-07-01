@@ -3,6 +3,14 @@ node:
   ports:
   - "8080"
   links:
-  - redis
+  - "redis"
 redis:
   image: redis
+  ports:
+  - "6379"
+lifecyclemanager:
+  image: zenviavas/lifecycle-manager
+  ports:
+  - "13101"
+  environment:
+  - "CARRIER=oi"
