@@ -7,5 +7,5 @@ docker-komposer.iml.idea/
 gradle/
 gradlew
 gradlew.bat
-.idea/
+.idea/*
 docker-komposer.iml

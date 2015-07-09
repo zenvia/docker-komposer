@@ -19,6 +19,7 @@ class KomposerRunner {
 
     private DefaultDockerClient dockerClient
     private KomposerBuilder komposerBuilder
+    private SECONDDS_TO_KILL = 10
 
     def KomposerRunner() {
         this.dockerClient = new DefaultDockerClient(DefaultDockerClient.fromEnv())
@@ -121,5 +122,22 @@ class KomposerRunner {
                 log.throwing('KomposerRunne', 'rm', e)
             }
         }
+    }
+
+    def stop(containerID){
+        this.dockerClient.stopContainer(containerID, SECONDDS_TO_KILL)
+        Thread.sleep(SECONDDS_TO_KILL*1000 + 2000)
+        return this.dockerClient.inspectContainer(containerID)
+    }
+
+    def start(containerID){
+        this.dockerClient.startContainer(containerID)
+        Thread.sleep(SECONDDS_TO_KILL*1000)
+        return this.dockerClient.inspectContainer(containerID)
+    }
+
+    def finish() {
+        this.dockerClient.close()
+        this.dockerClient = null
     }
 }
