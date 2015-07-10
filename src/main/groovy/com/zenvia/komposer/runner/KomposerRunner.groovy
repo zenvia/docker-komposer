@@ -20,6 +20,7 @@ class KomposerRunner {
     private DefaultDockerClient dockerClient
     private KomposerBuilder komposerBuilder
     private SECONDDS_TO_KILL = 10
+    private host
 
     def KomposerRunner() {
         this.dockerClient = new DefaultDockerClient(DefaultDockerClient.fromEnv())
@@ -38,7 +39,7 @@ class KomposerRunner {
             stream -> props.load(stream)
         }
 
-        def host = props.host
+        host = props.host
         def certPath = props.'cert.path'
         def certificates
         if (certPath) {
@@ -139,5 +140,9 @@ class KomposerRunner {
     def finish() {
         this.dockerClient.close()
         this.dockerClient = null
+    }
+
+    def URI getHostUri(){
+        return new URI(this.host)
     }
 }

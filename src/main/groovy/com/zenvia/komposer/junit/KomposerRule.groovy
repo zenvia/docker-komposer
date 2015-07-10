@@ -58,4 +58,8 @@ class KomposerRule extends ExternalResource {
         def containerInfo = this.runner.start(containerId)
         this.runningServices[serviceName].containerInfo = containerInfo
     }
+
+    def URI getHostURI() {
+        return this.runner.getHostUri()
+    }
 }

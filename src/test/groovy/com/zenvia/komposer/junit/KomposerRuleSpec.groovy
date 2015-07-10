@@ -49,6 +49,18 @@ class KomposerRuleSpec extends Specification {
         rule.getContainers().get("redis").containerInfo.state().running()
 
     }
+
+    def "getHostURI"() {
+        setup:
+            rule.before()
+        when:
+            URI hostUri = rule.getHostURI()
+        then:
+            hostUri.getHost() == "teste"
+            hostUri.getPort() == 5656
+            hostUri.getScheme() == "http"
+    }
+
     def cleanupSpec() {
         rule.after()
     }
