@@ -2,6 +2,7 @@ package com.zenvia.komposer.junit
 
 import com.spotify.docker.client.messages.ContainerState
 import groovy.util.logging.Log
+import spock.lang.Ignore
 import spock.lang.Specification
 
 /**
@@ -9,6 +10,7 @@ import spock.lang.Specification
  * @since 6/10/15
  */
 @Log
+@Ignore
 class KomposerRuleSpec extends Specification {
 
     static KomposerRule rule

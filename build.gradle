@@ -1,5 +1,5 @@
 group 'com.zenvia.komposer'
-version '1.1.4'
+version '1.1.6'
 
 apply plugin: 'groovy'
 apply plugin: 'jacoco'
@@ -50,11 +50,24 @@ artifacts {
     archives sourcesJar
 }
 
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.allTasks.any { it instanceof Sign }) {
+        allprojects {
+            ext."signing.password" = System.getenv('ENCRYPTION_PASSWORD')
+            if (!ext."signing.password") {
+                ext."signing.password" = System.getProperty('ENCRYPTION_PASSWORD')
+            }
+        }
+    }
+}
+
+
 signing {
     sign configurations.archives
 }
 
 ext {
+
     ossrhUsername = System.getenv('NEXUS_USER')
     ossrhPassword = System.getenv('NEXUS_PASS')
 
