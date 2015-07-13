@@ -1,13 +1,10 @@
 package com.zenvia.komposer.runner
 
-import com.spotify.docker.client.DefaultDockerClient
-import com.spotify.docker.client.DockerCertificates
-import com.spotify.docker.client.DockerClient
 import com.zenvia.komposer.builder.KomposerBuilder
 import com.zenvia.komposer.model.Komposition
+import de.gesellix.docker.client.DockerClient
+import de.gesellix.docker.client.DockerClientImpl
 import groovy.util.logging.Log
-
-import java.nio.file.Paths
 
 /**
  * @author Tiago Oliveira
@@ -16,13 +13,12 @@ import java.nio.file.Paths
  * */
 @Log
 class KomposerRunner {
-
-    private DefaultDockerClient dockerClient
+    private DockerClient dockerClient;
     private KomposerBuilder komposerBuilder
-    private SECONDDS_TO_KILL = 10
+    private SECONDS_TO_KILL = 10
 
     def KomposerRunner() {
-        this.dockerClient = new DefaultDockerClient(DefaultDockerClient.fromEnv())
+        this.dockerClient = new DockerClientImpl()
         this.komposerBuilder = new KomposerBuilder(dockerClient)
     }
 
@@ -32,21 +28,16 @@ class KomposerRunner {
     }
 
     def KomposerRunner(String dockerCfgFile) {
-
         def props = new Properties()
         new File(dockerCfgFile).withInputStream {
             stream -> props.load(stream)
         }
 
         def host = props.host
-        def certPath = props.'cert.path'
-        def certificates
-        if (certPath) {
-            certificates = DockerCertificates.builder().dockerCertPath(Paths.get(certPath)).build()
-        }
 
         log.info("Connecting to [${host}] using certificates from [${certPath}]")
-        this.dockerClient = DefaultDockerClient.builder().uri(host).dockerCertificates(certificates).build()
+        this.dockerClient = DockerClientImpl.createDockerClient((String)host)
+        this.dockerClient.auth(props)
         log.info(this.dockerClient.info().toString())
 
         this.komposerBuilder = new KomposerBuilder(dockerClient, props.'hub.user', props.'hub.pass', props.'hub.mail')
@@ -78,7 +69,7 @@ class KomposerRunner {
                 def creation = this.dockerClient.createContainer(containerConfig, containerName)
 
                 log.info("[$containerName] Starting container...")
-                dockerClient.startContainer(creation.id, hostConfig)
+                dockerClient.startContainer(creation.id)
 
                 log.info("[$containerName] Gathering container info...")
                 def info = this.dockerClient.inspectContainer(creation.id)
@@ -100,7 +91,7 @@ class KomposerRunner {
 
             log.info("Stopping service ${serviceName} [${containerId} - ${containerName}]")
             try {
-                dockerClient.killContainer(containerId)
+                dockerClient.stop(containerId)
             } catch (Exception e) {
                 log.throwing('KomposerRunner', 'down', e)
             }
@@ -117,7 +108,7 @@ class KomposerRunner {
             log.info("Removing container [${containerId} - ${containerName}] from service ${serviceName}")
 
             try {
-                dockerClient.removeContainer(containerId, removeVolumes)
+                dockerClient.rm(containerId)
             } catch (Exception e) {
                 log.throwing('KomposerRunne', 'rm', e)
             }
@@ -125,19 +116,18 @@ class KomposerRunner {
     }
 
     def stop(containerID){
-        this.dockerClient.stopContainer(containerID, SECONDDS_TO_KILL)
-        Thread.sleep(SECONDDS_TO_KILL*1000 + 2000)
+        this.dockerClient.stop(containerID)
+        //Thread.sleep(SECONDDS_TO_KILL*1000 + 2000)
         return this.dockerClient.inspectContainer(containerID)
     }
 
     def start(containerID){
         this.dockerClient.startContainer(containerID)
-        Thread.sleep(SECONDDS_TO_KILL*1000)
+        //Thread.sleep(SECONDDS_TO_KILL*1000)
         return this.dockerClient.inspectContainer(containerID)
     }
 
     def finish() {
-        this.dockerClient.close()
         this.dockerClient = null
     }
 }

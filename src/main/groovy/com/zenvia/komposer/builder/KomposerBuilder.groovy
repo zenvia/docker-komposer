@@ -20,16 +20,16 @@ import java.nio.file.Paths
 class KomposerBuilder {
 
     private File composeFile
-    private DockerClient client
+    private de.gesellix.docker.client.DockerClient client
     private hubLogin
 
-    def KomposerBuilder(DockerClient client, String hubUser, String hubPass, String hubMail) {
+    def KomposerBuilder(de.gesellix.docker.client.DockerClient client, String hubUser, String hubPass, String hubMail) {
         this.composeFile = composeFile
         this.client = client
         this.hubLogin = [user: hubUser, pass: hubPass, mail: hubMail]
     }
 
-    def KomposerBuilder(DockerClient client) {
+    def KomposerBuilder(de.gesellix.docker.client.DockerClient client) {
         this.composeFile = composeFile
         this.client = client
     }
@@ -66,7 +66,7 @@ class KomposerBuilder {
 
         def imageName = service.image
         if (imageName && pull) {
-            this.pullImage(imageName)
+            this.pullImage((String)imageName)
         } else if (service.build) {
             imageName = this.buildImage(service.build, serviceName, namePattern)
         }
@@ -184,7 +184,7 @@ class KomposerBuilder {
         return builder.build()
     }
 
-    def pullImage(String image) {
+    /*def pullImage(String image) {
         if (!image.contains(':')) {
             image += ':latest'
         }
@@ -238,13 +238,44 @@ class KomposerBuilder {
             log.severe(message)
             throw new DockerException(message, e)
         }
+    }*/
+
+    def pullImage (String image) {
+        if (!image.contains(':')) {
+            image += ':latest'
+        }
+
+        try {
+            if (this.hubLogin && this.hubLogin.user) {
+                log.info("Authenticating on DockerHub with credentials: ${this.hubLogin}")
+                this.authenticateOnDockerHub((String)this.hubLogin.user, (String)this.hubLogin.pass, (String)this.hubLogin.mail)
+            }
+            this.client.pull(image)
+        }
+        catch (Exception e) {
+            def message = "Impossible to pull the image from repository, please do it manually"
+            log.severe(message)
+            throw new DockerException(message, e)
+        }
+    }
+
+    def authenticateOnDockerHub (String username, String password, String email) {
+        def authConfig = [
+                            "username"     : username,
+                            "password"     : password,
+                            "email"        : email,
+                            "serveraddress": "https://index.docker.io/v1/"
+                         ]
+        this.client.auth(authConfig)
     }
 
     def buildImage(path, serviceName, namePatterm) {
         log.info("Building image on [${path}]")
         def imageName = sprintf(namePatterm, [serviceName])
         def ph = new AnsiProgressHandler()
-        this.client.build(Paths.get(path), ph)
+
+        def fileContent = new FileInputStream(path)
+        this.client.build(fileContent)
         return imageName
     }
 }

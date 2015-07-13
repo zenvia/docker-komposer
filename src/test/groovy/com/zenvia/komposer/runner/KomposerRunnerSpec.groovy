@@ -1,9 +1,9 @@
 package com.zenvia.komposer.runner
 
-import com.spotify.docker.client.DefaultDockerClient
 import com.spotify.docker.client.LogStream
 import com.spotify.docker.client.messages.ContainerCreation
 import com.spotify.docker.client.messages.ContainerInfo
+import de.gesellix.docker.client.DockerClient
 import spock.lang.Specification
 
 /**
@@ -11,7 +11,7 @@ import spock.lang.Specification
  * */
 class KomposerRunnerSpec extends Specification {
 
-    DefaultDockerClient dockerClient = Mock(constructorArgs: [DefaultDockerClient.fromEnv()])
+    DockerClient dockerClient = Mock(DockerClient)
     def runner = new KomposerRunner(dockerClient)
     def services = ['sender': [containerId: '9998877', containerName: 'komposer_resources_sender_']]
 
@@ -38,13 +38,42 @@ class KomposerRunnerSpec extends Specification {
         when:
             runner.down(services)
         then:
-            dockerClient.killContainer('9998877')
+            dockerClient.stop(_) >> { argument ->
+                assert argument[0] == services.sender.containerId
+            }
     }
 
     def "Rm"() {
         when:
             runner.rm(services)
         then:
-            dockerClient.removeContainer('9998877')
+            dockerClient.rm(_) >> { argument ->
+                assert argument[0] == services.sender.containerId
+            }
+    }
+
+    def "Stop"() {
+        when:
+            runner.stop(services.sender.containerId)
+        then:
+            dockerClient.stop(_) >> { argument ->
+                assert argument[0] == services.sender.containerId
+            }
+    }
+
+    def "Start"() {
+        when:
+            runner.start(services.sender.containerId)
+        then:
+            dockerClient.startContainer(_) >> { argument ->
+                assert argument[0] == services.sender.containerId
+            }
+    }
+
+    def "Finish"() {
+        when:
+            runner.finish()
+        then:
+            assert runner.dockerClient == null
     }
 }
