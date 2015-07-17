@@ -12,9 +12,6 @@ import java.nio.file.Paths
 
 /**
  * @author Tiago Oliveira
- * @todo split the code, maybe using closures, to avoid such big methods
- * @todo get the instanceID based on the running instances of the same compose on docker_host
- * @todo create an RUN method when it's possible to inform a service and run just this one with it's dependencies
  * */
 @Log
 class KomposerBuilder {
