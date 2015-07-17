@@ -1,0 +1,7 @@
+Changelog
+=========
+
+Release 1.1.5
+
+* #11 - Create a new method to allow access host data
+

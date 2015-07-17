@@ -1,5 +1,5 @@
 .gradle
-build/
+/build/
 gradle-app.setting
 komposer.ipr
 komposer.iws
