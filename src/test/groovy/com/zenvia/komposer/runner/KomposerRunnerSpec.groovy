@@ -1,8 +1,6 @@
 package com.zenvia.komposer.runner
 
-import com.spotify.docker.client.LogStream
-import com.spotify.docker.client.messages.ContainerCreation
-import com.spotify.docker.client.messages.ContainerInfo
+import com.zenvia.komposer.model.docker.ContainerInfo
 import de.gesellix.docker.client.DockerClient
 import spock.lang.Specification
 
@@ -18,14 +16,12 @@ class KomposerRunnerSpec extends Specification {
     def "Up"() {
         given:
             def file = 'src/test/resources/docker-compose.yml'
-            def creation = new ContainerCreation()
-            creation.id = '9998877'
+            def creation = [id: services.sender.containerId]
             def info = new ContainerInfo()
-            def stream = Mock(LogStream)
         when:
             dockerClient.createContainer(_, _) >> creation
             dockerClient.inspectContainer(creation.id) >> info
-            dockerClient.logs(_, _) >> stream
+            //dockerClient.logs(_, _) >> stream
             def result = runner.up(file)
         then:
             result

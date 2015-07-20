@@ -1,6 +1,5 @@
 package com.zenvia.komposer.junit
 
-import com.spotify.docker.client.messages.ContainerState
 import groovy.util.logging.Log
 import spock.lang.Specification
 

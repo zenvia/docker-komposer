@@ -23,10 +23,11 @@ dependencies {
 
     compile 'org.codehaus.groovy:groovy-all:2.3.11'
     compile 'org.yaml:snakeyaml:1.15'
-    compile 'com.spotify:docker-client:2.7.7'
     compile 'de.gesellix:docker-client:2015-07-07T09-27-56'
     compile group: 'org.slf4j', name:'slf4j-api', version: '1.7.12'
     compile group: 'junit', name: 'junit', version: '4.11'
+    compile 'com.google.collections:google-collections:1.0'
+
 
     testCompile "org.spockframework:spock-core:1.0-groovy-2.4"
 

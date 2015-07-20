@@ -1,12 +1,12 @@
 package com.zenvia.komposer.builder
 
-import com.fasterxml.jackson.dataformat.yaml.snakeyaml.Yaml
-import com.spotify.docker.client.AnsiProgressHandler
-import com.spotify.docker.client.DockerClient
-import com.spotify.docker.client.DockerException
-import com.spotify.docker.client.ProgressHandler
-import com.spotify.docker.client.messages.*
+import com.zenvia.komposer.model.docker.ContainerConfig
+import com.zenvia.komposer.model.docker.HostConfig
+import com.zenvia.komposer.model.docker.PortBinding
+import de.gesellix.docker.client.DockerClient
+import de.gesellix.docker.client.DockerClientException
 import groovy.util.logging.Log
+import org.yaml.snakeyaml.Yaml
 
 import java.nio.file.Paths
 
@@ -20,16 +20,16 @@ import java.nio.file.Paths
 class KomposerBuilder {
 
     private File composeFile
-    private de.gesellix.docker.client.DockerClient client
+    private DockerClient client
     private hubLogin
 
-    def KomposerBuilder(de.gesellix.docker.client.DockerClient client, String hubUser, String hubPass, String hubMail) {
+    def KomposerBuilder(DockerClient client, String hubUser, String hubPass, String hubMail) {
         this.composeFile = composeFile
         this.client = client
         this.hubLogin = [user: hubUser, pass: hubPass, mail: hubMail]
     }
 
-    def KomposerBuilder(de.gesellix.docker.client.DockerClient client) {
+    def KomposerBuilder(DockerClient client) {
         this.composeFile = composeFile
         this.client = client
     }
@@ -62,13 +62,14 @@ class KomposerBuilder {
     def ContainerConfig createContainerConfig(service, serviceName, namePattern, pull = true) {
         log.info("Creating container config for [${serviceName}], pullImage = ${pull}")
 
-        def builder = ContainerConfig.builder()
+        ContainerConfig builder = new ContainerConfig()
 
         def imageName = service.image
         if (imageName && pull) {
             this.pullImage((String)imageName)
         } else if (service.build) {
-            imageName = this.buildImage(service.build, serviceName, namePattern)
+            throw new DockerClientException("Not implemented")
+            //imageName = this.buildImage(service.build, serviceName, namePattern)
         }
 
         def exposed = []
@@ -98,22 +99,22 @@ class KomposerBuilder {
             volumes += [it]
         }
 
-        builder.image(imageName)
+        builder.image = imageName
 
         if (service.cmd) {
-            builder.cmd(service.cmd)
+            builder.cmd = Arrays.asList((String)service.cmd)
         }
 
-        builder.exposedPorts(exposed.toSet())
-        builder.env(envs)
-        builder.volumes(volumes.toSet())
+        builder.exposedPorts = exposed.toSet()
+        builder.env = envs
+        builder.volumes = volumes.toSet()
 
-        return builder.build()
+        return builder
     }
 
     def createHostConfig(service, namePattern) {
         log.info("Creating host config...")
-        def builder = HostConfig.builder()
+        def builder = new HostConfig()
 
         def ports = [:]
         service.ports?.each { String mapping ->
@@ -150,7 +151,9 @@ class KomposerBuilder {
             }
 
             log.fine("Port mapping $internalPort -> $externalPort:$host")
-            ports[internalPort] = [PortBinding.of(host, externalPort)]
+            ports[internalPort] = [
+                    new PortBinding(hostIp: host, hostPort: externalPort)
+            ]
         }
 
         def links = []
@@ -175,13 +178,13 @@ class KomposerBuilder {
             links += [linkUrl]
         }
 
-        builder.portBindings(ports)
-        builder.links(links)
+        builder.portBindings = ports
+        builder.links = links
         if (service.net) {
-            builder.networkMode(service.net)
+            builder.networkMode = service.net
         }
 
-        return builder.build()
+        return builder.asMap()
     }
 
     /*def pullImage(String image) {
@@ -255,7 +258,7 @@ class KomposerBuilder {
         catch (Exception e) {
             def message = "Impossible to pull the image from repository, please do it manually"
             log.severe(message)
-            throw new DockerException(message, e)
+            throw new DockerClientException(message, e)
         }
     }
 
@@ -269,13 +272,15 @@ class KomposerBuilder {
         this.client.auth(authConfig)
     }
 
-    def buildImage(path, serviceName, namePatterm) {
+    /*
+        TODO: Check how implement CompressedDirectory
+    */
+    /*def buildImage(String path, serviceName, namePatterm) {
         log.info("Building image on [${path}]")
         def imageName = sprintf(namePatterm, [serviceName])
-        def ph = new AnsiProgressHandler()
-
-        def fileContent = new FileInputStream(path)
-        this.client.build(fileContent)
+        //def ph = new AnsiProgressHandler()
+        InputStream is = new FileInputStream(Paths.get(path).toAbsolutePath().toString())
+        this.client.build(is)
         return imageName
-    }
+    }*/
 }

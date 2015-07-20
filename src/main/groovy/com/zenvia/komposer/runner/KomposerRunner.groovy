@@ -2,6 +2,8 @@ package com.zenvia.komposer.runner
 
 import com.zenvia.komposer.builder.KomposerBuilder
 import com.zenvia.komposer.model.Komposition
+import com.zenvia.komposer.model.docker.ContainerConfig
+import com.zenvia.komposer.model.docker.ContainerInfo
 import de.gesellix.docker.client.DockerClient
 import de.gesellix.docker.client.DockerClientImpl
 import groovy.util.logging.Log
@@ -15,7 +17,6 @@ import groovy.util.logging.Log
 class KomposerRunner {
     private DockerClient dockerClient;
     private KomposerBuilder komposerBuilder
-    private SECONDS_TO_KILL = 10
 
     def KomposerRunner() {
         this.dockerClient = new DockerClientImpl()
@@ -34,9 +35,10 @@ class KomposerRunner {
         }
 
         def host = props.host
+        def certPath
 
         log.info("Connecting to [${host}] using certificates from [${certPath}]")
-        this.dockerClient = DockerClientImpl.createDockerClient((String)host)
+        this.dockerClient = new DockerClientImpl(dockerHost: host)
         this.dockerClient.auth(props)
         log.info(this.dockerClient.info().toString())
 
@@ -57,16 +59,15 @@ class KomposerRunner {
 
             def result = [:]
             configs.each { config ->
-
                 def serviceName = config.key
                 def containerName = config.value.name
-                def containerConfig = config.value.container
-                def hostConfig = config.value.host
+                ContainerConfig containerConfig = config.value.container
+                //def hostConfig = config.value.host
 
                 log.info("Starting service ${serviceName}")
 
                 log.info("[$containerName] Creating container...")
-                def creation = this.dockerClient.createContainer(containerConfig, containerName)
+                def creation = this.dockerClient.createContainer(containerConfig.asMap(), [name: containerName])
 
                 log.info("[$containerName] Starting container...")
                 dockerClient.startContainer(creation.id)

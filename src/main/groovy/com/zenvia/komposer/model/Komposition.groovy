@@ -1,6 +1,6 @@
 package com.zenvia.komposer.model
 
-import com.spotify.docker.client.messages.ContainerInfo
+import com.zenvia.komposer.model.docker.ContainerInfo
 
 /**
  * @author Tiago de Oliveira
