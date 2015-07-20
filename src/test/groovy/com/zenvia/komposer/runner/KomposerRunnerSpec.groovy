@@ -13,6 +13,10 @@ class KomposerRunnerSpec extends Specification {
     def runner = new KomposerRunner(dockerClient)
     def services = ['sender': [containerId: '9998877', containerName: 'komposer_resources_sender_']]
 
+    def setup() {
+        runner.host = 'http://teste:5656'
+    }
+
     def "Up"() {
         given:
             def file = 'src/test/resources/docker-compose.yml'
@@ -71,5 +75,15 @@ class KomposerRunnerSpec extends Specification {
             runner.finish()
         then:
             assert runner.dockerClient == null
+    }
+
+    def "getHostURI"(){
+        when:
+            URI hostUri = runner.getHostUri()
+
+        then:
+            hostUri.getHost() == "teste"
+            hostUri.getPort() == 5656
+            hostUri.getScheme() == "http"
     }
 }

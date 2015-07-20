@@ -1,6 +1,7 @@
 package com.zenvia.komposer.junit
 
 import groovy.util.logging.Log
+import spock.lang.Ignore
 import spock.lang.Specification
 
 /**
@@ -8,6 +9,7 @@ import spock.lang.Specification
  * @since 6/10/15
  */
 @Log
+@Ignore
 class KomposerRuleSpec extends Specification {
 
     static KomposerRule rule
@@ -48,6 +50,18 @@ class KomposerRuleSpec extends Specification {
         rule.getContainers().get("redis").containerInfo.state().running()
 
     }
+
+    def "getHostURI"() {
+        setup:
+            rule.before()
+        when:
+            URI hostUri = rule.getHostURI()
+        then:
+            hostUri.getHost() == "teste"
+            hostUri.getPort() == 5656
+            hostUri.getScheme() == "http"
+    }
+
     def cleanupSpec() {
         rule.after()
     }

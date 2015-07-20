@@ -37,6 +37,7 @@ class KomposerRunner {
         def host = props.host
         def certPath
 
+
         log.info("Connecting to [${host}] using certificates from [${certPath}]")
         this.dockerClient = new DockerClientImpl(dockerHost: host)
         this.dockerClient.auth(props)
@@ -130,5 +131,9 @@ class KomposerRunner {
 
     def finish() {
         this.dockerClient = null
+    }
+
+    def URI getHostUri(){
+        return new URI(this.host)
     }
 }
