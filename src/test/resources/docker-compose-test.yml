@@ -1,10 +1,8 @@
-node:
-  image: node
-  ports:
-  - "8080"
-  links:
-  - "redis"
-redis:
-  image: redis
-  ports:
-  - "6379"
+machine01:
+  image: ubuntu
+  command: nc -l 1234
+  hostname: machine01.weave.local
+machine02:
+  image: ubuntu
+  command: nc -l 4321
+  hostname: machine02.weave.local

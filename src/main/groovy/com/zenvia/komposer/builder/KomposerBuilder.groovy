@@ -1,19 +1,19 @@
 package com.zenvia.komposer.builder
 
-import com.fasterxml.jackson.dataformat.yaml.snakeyaml.Yaml
 import com.spotify.docker.client.AnsiProgressHandler
 import com.spotify.docker.client.DockerClient
 import com.spotify.docker.client.DockerException
 import com.spotify.docker.client.ProgressHandler
 import com.spotify.docker.client.messages.*
-import groovy.util.logging.Log
+import groovy.util.logging.Slf4j
+import org.yaml.snakeyaml.Yaml
 
 import java.nio.file.Paths
 
 /**
  * @author Tiago Oliveira
  * */
-@Log
+@Slf4j
 class KomposerBuilder {
 
     private File composeFile
@@ -97,8 +97,16 @@ class KomposerBuilder {
 
         builder.image(imageName)
 
-        if (service.cmd) {
-            builder.cmd(service.cmd)
+        if (service.command) {
+            builder.cmd(service.command.split(' '))
+        }
+
+        if (service.hostname) {
+            builder.hostname(service.hostname)
+        }
+
+        if (service.domainname) {
+            builder.domainname(service.domainname)
         }
 
         builder.exposedPorts(exposed.toSet())
@@ -114,7 +122,7 @@ class KomposerBuilder {
 
         def ports = [:]
         service.ports?.each { String mapping ->
-            log.finest("Processing $mapping")
+            log.info("Processing $mapping")
 
             def externalPort = ''
             def internalPort = ''
@@ -135,7 +143,6 @@ class KomposerBuilder {
                 }
             } else {
                 internalPort = mapping
-                externalPort = mapping
             }
 
             if (internalPort && !internalPort.contains('/')) {
@@ -146,13 +153,13 @@ class KomposerBuilder {
                 externalPort += '/tcp'
             }
 
-            log.fine("Port mapping $internalPort -> $externalPort:$host")
+            log.info("Port mapping $internalPort -> $externalPort:$host")
             ports[internalPort] = [PortBinding.of(host, externalPort)]
         }
 
         def links = []
         service.links?.each { String link ->
-            log.finest("Processing $link")
+            log.info("Processing $link")
 
             def linkAlias
             def linkContainer
@@ -168,7 +175,7 @@ class KomposerBuilder {
             linkContainer = sprintf(namePattern, [linkContainer])
             def linkUrl = linkContainer + ':' + linkAlias
 
-            log.fine("Creating link $linkUrl ")
+            log.info("Creating link $linkUrl ")
             links += [linkUrl]
         }
 
@@ -177,7 +184,7 @@ class KomposerBuilder {
         if (service.net) {
             builder.networkMode(service.net)
         }
-
+        builder.networkMode()
         return builder.build()
     }
 
@@ -202,7 +209,7 @@ class KomposerBuilder {
                         progress = ""
                     }
 
-                    log.fine(sprintf("%s: %s %s%n", [id, message.status(), progress]))
+                    log.info(sprintf("%s: %s %s%n", [id, message.status(), progress]))
                 } else {
 
                     String value = message.stream()
@@ -221,19 +228,22 @@ class KomposerBuilder {
             }
         }
 
-        try {
-            if (this.hubLogin && this.hubLogin.user) {
-                log.info("Pulling image [${image}] using authentication...")
-                AuthConfig auth = AuthConfig.builder().username(this.hubLogin.user).password(this.hubLogin.pass).email(this.hubLogin.mail).build()
-                this.client.pull(image, auth)
-            } else {
-                log.info("Pulling image [${image}] without auth...")
-                this.client.pull(image)
+        def hasImageLocal = this.client.listImages().findAll { it.repoTags.toString().contains(image) }
+        if (!hasImageLocal) {
+            try {
+                if (this.hubLogin && this.hubLogin.user) {
+                    log.info("Pulling image [${image}] using authentication...")
+                    AuthConfig auth = AuthConfig.builder().username(this.hubLogin.user).password(this.hubLogin.pass).email(this.hubLogin.mail).build()
+                    this.client.pull(image, auth, progress)
+                } else {
+                    log.info("Pulling image [${image}] without auth...")
+                    this.client.pull(image, progress)
+                }
+            } catch (Exception e) {
+                def message = "Impossible to pull the image from repository, please do it manually"
+                log.error(message, e)
+                throw new DockerException(message, e)
             }
-        }  catch (Exception e) {
-            def message = "Impossible to pull the image from repository, please do it manually"
-            log.severe(message)
-            throw new DockerException(message, e)
         }
     }
 

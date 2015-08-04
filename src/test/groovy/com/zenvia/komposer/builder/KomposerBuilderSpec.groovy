@@ -15,13 +15,13 @@ class KomposerBuilderSpec extends Specification {
 
     def 'create container config with all parameters'() {
         given:
-            def service = [image: 'mysql', expose: ['3000', '3001/tcp', '3002/udp'], environment: ['HEY=HELLO'], volumes: ['/var/lib/test'], cmd: 'echo test']
+            def service = [image: 'mysql', expose: ['3000', '3001/tcp', '3002/udp'], environment: ['HEY=HELLO'], volumes: ['/var/lib/test'], command: 'echo test']
         when:
             def response = builder.createContainerConfig(service, 'test', 'komposer_%s_1')
         then:
             response
             response.image() == service.image
-            response.cmd() == [service.cmd]
+            response.cmd() == service.command.split(' ')
             response.exposedPorts().toArray().contains('3000/tcp')
             response.exposedPorts().toArray().contains('3002/udp')
             response.volumes().toArray().contains('/var/lib/test')
@@ -44,13 +44,13 @@ class KomposerBuilderSpec extends Specification {
 
     def 'create container with build tag'() {
         given:
-            def service = [build: '.', expose: ['3000', '3001/tcp', '3002/udp'], environment: ['HEY=HELLO'], volumes: ['/var/lib/test'], cmd: 'echo test']
+            def service = [build: '.', expose: ['3000', '3001/tcp', '3002/udp'], environment: ['HEY=HELLO'], volumes: ['/var/lib/test'], command: 'echo test']
         when:
             def response = builder.createContainerConfig(service, 'test', 'komposer_%s_1')
         then:
             response
             response.image() == 'komposer_test_1'
-            response.cmd() == [service.cmd]
+            response.cmd() == service.command.split(' ')
             response.exposedPorts().toArray().contains('3000/tcp')
             response.exposedPorts().toArray().contains('3002/udp')
             response.volumes().toArray().contains('/var/lib/test')

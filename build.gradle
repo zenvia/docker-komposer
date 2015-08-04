@@ -1,5 +1,5 @@
 group 'com.zenvia.komposer'
-version '1.1.6'
+version '1.1.7'
 
 apply plugin: 'groovy'
 apply plugin: 'jacoco'
@@ -7,7 +7,9 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 repositories {
+    mavenLocal()
     mavenCentral()
+    jcenter()
     maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
 }
 
@@ -20,18 +22,22 @@ test {
 
 dependencies {
 
-    compile 'org.codehaus.groovy:groovy-all:2.3.11'
+    compile 'org.codehaus.groovy:groovy-all:2.4.0'
+    compile (group: 'com.spotify', name: 'docker-client', version: '3.1.2-SNAPSHOT', classifier: 'shaded') {
+        exclude group: 'com.fasterxml.jackson.jaxrs'
+        exclude group: 'com.fasterxml.jackson.core'
+        exclude group: 'com.fasterxml.jackson.datatype'
+    }
     compile 'org.yaml:snakeyaml:1.15'
-    compile 'com.spotify:docker-client:2.7.7'
     compile group: 'org.slf4j', name:'slf4j-api', version: '1.7.12'
     compile group: 'junit', name: 'junit', version: '4.11'
 
     testCompile "org.spockframework:spock-core:1.0-groovy-2.4"
+    testCompile 'com.athaydes:spock-reports:1.2.5'
 
+    testRuntime 'cglib:cglib-nodep:3.1'
     testRuntime group: 'ch.qos.logback', name:'logback-classic', version: '1.0.0'
     testRuntime group: 'ch.qos.logback', name:'logback-core', version: '1.0.0'
-    testRuntime 'cglib:cglib-nodep:3.1'
-
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {

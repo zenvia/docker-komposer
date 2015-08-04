@@ -13,11 +13,13 @@ class KomposerRule extends ExternalResource {
     private String composeFile
     private Map<String, Komposition> runningServices
     private pull = true
+    private privateNetwork = false
 
-    def KomposerRule(String compose, String dockerCfg, Boolean pull = true) {
-        this.runner = new KomposerRunner(dockerCfg)
+    def KomposerRule(String compose, String dockerCfg, Boolean pull = true, Boolean privateNetwork = false) {
+        this.runner = new KomposerRunner(dockerCfg, privateNetwork)
         this.composeFile = compose
         this.pull = pull
+        this.privateNetwork = privateNetwork
     }
 
     def KomposerRule(String compose, Boolean pull = true) {
