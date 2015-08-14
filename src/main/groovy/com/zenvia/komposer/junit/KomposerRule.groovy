@@ -9,11 +9,11 @@ import org.junit.rules.ExternalResource
  * */
 class KomposerRule extends ExternalResource {
 
-    private KomposerRunner runner
-    private String composeFile
+    private final KomposerRunner runner
+    private final String composeFile
     private Map<String, Komposition> runningServices
-    private pull = true
-    private privateNetwork = false
+    private final pull = true
+    private final privateNetwork = false
 
     def KomposerRule(String compose, String dockerCfg, Boolean pull = true, Boolean privateNetwork = false) {
         this.runner = new KomposerRunner(dockerCfg, privateNetwork)
@@ -49,13 +49,13 @@ class KomposerRule extends ExternalResource {
         return this.runningServices
     }
 
-    def stop(String serviceName){
+    def stop(String serviceName) {
         def containerId = runningServices[serviceName].containerId
         def containerInfo = this.runner.stop(containerId)
         this.runningServices[serviceName].containerInfo = containerInfo
     }
 
-    def start(String serviceName){
+    def start(String serviceName) {
         def containerId = runningServices[serviceName].containerId
         def containerInfo = this.runner.start(containerId)
         this.runningServices[serviceName].containerInfo = containerInfo

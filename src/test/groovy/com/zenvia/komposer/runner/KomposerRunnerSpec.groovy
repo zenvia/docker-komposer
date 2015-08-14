@@ -19,7 +19,7 @@ class KomposerRunnerSpec extends Specification {
         runner.host = 'http://teste:5656'
     }
 
-    def "Up"() {
+    def "up"() {
         given:
             def file = 'src/test/resources/docker-compose.yml'
             def creation = new ContainerCreation()
@@ -38,21 +38,21 @@ class KomposerRunnerSpec extends Specification {
             result.sender.containerInfo == info
     }
 
-    def "Down"() {
+    def "down"() {
         when:
             runner.down(services)
         then:
             dockerClient.killContainer('9998877')
     }
 
-    def "Rm"() {
+    def "rm"() {
         when:
             runner.rm(services)
         then:
             dockerClient.removeContainer('9998877')
     }
 
-    def "getHostURI"(){
+    def "getHostURI"() {
         when:
             URI hostUri = runner.getHostUri()
 

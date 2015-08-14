@@ -37,7 +37,7 @@ class KomposerNetworkSetup {
     }
 
     def pullWeaveImage(dockerClient) {
-        if(!this.checkIfWeaveImageIsPresent(dockerClient)) {
+        if (!this.checkIfWeaveImageIsPresent(dockerClient)) {
             log.info("Pulling weave image!")
             dockerClient.pull(WEAVE_IMAGE_TAG)
         }

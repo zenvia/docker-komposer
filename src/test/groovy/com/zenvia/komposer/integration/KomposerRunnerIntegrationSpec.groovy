@@ -1,9 +1,5 @@
 package com.zenvia.komposer.integration
 
-import com.spotify.docker.client.DefaultDockerClient
-import com.spotify.docker.client.LogStream
-import com.spotify.docker.client.messages.ContainerCreation
-import com.spotify.docker.client.messages.ContainerInfo
 import com.zenvia.komposer.runner.KomposerRunner
 import spock.lang.Ignore
 import spock.lang.Specification
@@ -28,7 +24,7 @@ class KomposerRunnerIntegrationSpec extends Specification {
         then: 'I expect the containers to be created'
             containers
         and: 'the docker client to be running with the new proxy server'
-            runner.dockerClient.uri.authority.split(':').last().equals('12375')
+            runner.dockerClient.uri.authority.split(':').last() == ('12375')
         and: 'a private network to be bonding the containers together'
             runner.privateNetworkStatus().contains('weave proxy is running')
         when: 'I try to connect from one container to another using the private network'
@@ -45,7 +41,7 @@ class KomposerRunnerIntegrationSpec extends Specification {
         and: 'the private network to be destroyed'
             runner.privateNetworkStatus().contains('weave container is not present. Have you launched it?')
         and: 'the docker client to be using the real host'
-            !runner.dockerClient.uri.authority.split(':').last().equals('12375')
+            runner.dockerClient.uri.authority.split(':').last() != '12375'
     }
 
     def cleanup() {
@@ -54,7 +50,9 @@ class KomposerRunnerIntegrationSpec extends Specification {
                 runner.down(containers)
                 runner.rm(containers)
             }
-        } catch(e) {}
+        } catch (Exception e) {
+            log.error("Error on clean up ", e)
+        }
     }
 
 }
