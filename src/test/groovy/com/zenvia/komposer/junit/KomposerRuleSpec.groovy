@@ -1,6 +1,5 @@
 package com.zenvia.komposer.junit
 
-import com.spotify.docker.client.messages.ContainerState
 import groovy.util.logging.Log
 import spock.lang.Ignore
 import spock.lang.Specification
@@ -21,7 +20,7 @@ class KomposerRuleSpec extends Specification {
         rule = new KomposerRule(composeFile, cfgFile, false)
     }
 
-    def "GetContainers"() {
+    def "getContainers"() {
         when:
             rule.before()
         then:
@@ -31,7 +30,7 @@ class KomposerRuleSpec extends Specification {
             rule.getContainers().get('lifecyclemanager').containerInfo.networkSettings().ports()
     }
 
-    def "stopContainers"(){
+    def "stopContainers"() {
         when:
             rule.before()
         then:
@@ -40,7 +39,7 @@ class KomposerRuleSpec extends Specification {
             !rule.getContainers().get("redis").containerInfo.state().running()
     }
 
-    def "startContainers"(){
+    def "startContainers"() {
         when:
         rule.before()
         then:

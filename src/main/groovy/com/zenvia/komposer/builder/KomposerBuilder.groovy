@@ -9,6 +9,7 @@ import groovy.util.logging.Slf4j
 import org.yaml.snakeyaml.Yaml
 
 import java.nio.file.Paths
+import java.security.SecureRandom
 
 /**
  * @author Tiago Oliveira
@@ -16,9 +17,9 @@ import java.nio.file.Paths
 @Slf4j
 class KomposerBuilder {
 
-    private File composeFile
-    private DockerClient client
-    private hubLogin
+    private final File composeFile
+    private final DockerClient client
+    private final hubLogin
 
     def KomposerBuilder(DockerClient client, String hubUser, String hubPass, String hubMail) {
         this.composeFile = composeFile
@@ -35,7 +36,7 @@ class KomposerBuilder {
         log.info("Building containers from ${composeFile.absolutePath}")
 
         def prefix = Paths.get(composeFile.absolutePath).parent.fileName
-        def instanceId = new Random().nextInt(1000)
+        def instanceId = new SecureRandom().nextInt(1000)
         def namePattern = "komposer_${prefix}_%s_${instanceId}"
 
         def compose = new Yaml().load(composeFile.text)
@@ -202,12 +203,10 @@ class KomposerBuilder {
                 }
 
                 if (message.progressDetail() != null) {
-                    final String id = message.id()
+                    final String ID = message.id()
 
                     String progress = message.progress()
-                    if (!progress) {
-                        progress = ""
-                    }
+                    progress ?: ""
 
                     log.info(sprintf("%s: %s %s%n", [id, message.status(), progress]))
                 } else {
@@ -219,9 +218,7 @@ class KomposerBuilder {
                         value = message.status()
                     }
 
-                    if (!value) {
-                        value = message.toString()
-                    }
+                    value ?: message.toString()
 
                     log.info(value)
                 }

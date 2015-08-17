@@ -7,10 +7,10 @@ import com.spotify.docker.client.messages.ContainerInfo
  * @since 6/11/15
  */
 class Komposition {
-    private String containerId
-    private String containerName
-    private ContainerInfo containerInfo
-    private Boolean removeVolumes = false
+    private final String containerId
+    private final String containerName
+    private final ContainerInfo containerInfo
+    private final Boolean removeVolumes = false
 
     public Komposition(args) {
         this.containerId = args.containerId

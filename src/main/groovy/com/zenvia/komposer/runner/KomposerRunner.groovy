@@ -23,10 +23,10 @@ class KomposerRunner {
 
     private DefaultDockerClient dockerClient
     private DefaultDockerClient originalDockerClient
-    private KomposerBuilder komposerBuilder
-    private SECONDDS_TO_KILL = 10
+    private final KomposerBuilder komposerBuilder
+    private static final SECONDDS_TO_KILL = 10
     private host
-    private privateNetwork
+    private final privateNetwork
     private networkSetup
 
     def KomposerRunner() {
@@ -87,9 +87,7 @@ class KomposerRunner {
     }
 
     def up(String composeFile, Boolean pull = true) {
-        if(!composeFile) {
-            composeFile = 'docker-compose.yml'
-        }
+        composeFile ?: 'docker-compose.yml'
 
         def file = new File(composeFile)
         if (file.exists()) {
@@ -127,8 +125,9 @@ class KomposerRunner {
                         while (logs.hasNext()) {
                             log.info("$containerName: ${StandardCharsets.US_ASCII.decode(logs.next().content()).toString()}")
                         }
-                        logs.finalize()
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                        log.error("Impossible to start logging thread", e)
+                    }
                 }
 
                 result[serviceName] = new Komposition(containerId: creation.id, containerName: containerName, containerInfo: info)
@@ -178,15 +177,15 @@ class KomposerRunner {
         }
     }
 
-    def stop(containerID){
+    def stop(containerID) {
         this.dockerClient.stopContainer(containerID, SECONDDS_TO_KILL)
-        Thread.sleep(SECONDDS_TO_KILL*1000 + 2000)
+        Thread.sleep(SECONDDS_TO_KILL * 1000 + 2000)
         return this.dockerClient.inspectContainer(containerID)
     }
 
-    def start(containerID){
+    def start(containerID) {
         this.dockerClient.startContainer(containerID)
-        Thread.sleep(SECONDDS_TO_KILL*1000)
+        Thread.sleep(SECONDDS_TO_KILL * 1000)
         return this.dockerClient.inspectContainer(containerID)
     }
 
@@ -195,20 +194,19 @@ class KomposerRunner {
         def logs = this.dockerClient.execStart(executor)
 
         def result = ''
-        while(logs.hasNext()) {
+        while (logs.hasNext()) {
             result += StandardCharsets.US_ASCII.decode(logs.next().content()).toString()
         }
 
         return result
     }
 
-
     def finish() {
         this.dockerClient.close()
         this.dockerClient = null
     }
 
-    def URI getHostUri(){
+    def URI getHostUri() {
         return new URI(this.host)
     }
 }
