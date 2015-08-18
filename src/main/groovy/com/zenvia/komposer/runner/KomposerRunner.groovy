@@ -130,7 +130,7 @@ class KomposerRunner {
                     }
                 }
 
-                result[serviceName] = new Komposition(containerId: creation.id, containerName: containerName, containerInfo: info)
+                result[serviceName] = new Komposition(containerId: creation.id, containerName: containerName, containerInfo: info, runner: this)
             }
 
             return result
