@@ -81,10 +81,26 @@ class KomposerNetworkSetup {
             result += logLine
         }
 
-        dockerClient.killContainer(creation.id)
-        dockerClient.removeContainer(creation.id)
+        this.safeKillContainer(dockerClient, creation.id)
+        this.safeRemoveContainer(dockerClient, creation.id)
 
         return result
+    }
+
+    def safeKillContainer(dockerClient, containerId) {
+        try {
+            dockerClient.killContainer(containerId)
+        } catch (Exception e) {
+            log.info("Container $containerId already killed!")
+        }
+    }
+
+    def safeRemoveContainer(dockerClient, containerId) {
+        try {
+            dockerClient.removeContainer(containerId)
+        } catch (Exception e) {
+            log.info("Container $containerId already removed!")
+        }
     }
 
     def createNetworkAdminContainer(command, host, debug = '') {

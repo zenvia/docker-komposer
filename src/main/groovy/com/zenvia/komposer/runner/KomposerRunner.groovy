@@ -68,13 +68,17 @@ class KomposerRunner {
 
     def setupPrivateNetwork() {
         this.networkSetup = new KomposerNetworkSetup()
-        networkSetup.start(this.dockerClient)
-        def host = networkSetup.getHost(this.dockerClient)
+        try {
+            networkSetup.start(this.dockerClient)
+            def host = networkSetup.getHost(this.dockerClient)
 
-        this.originalDockerClient = this.dockerClient
-        if (host) {
-            host = 'http://' + host
-            this.dockerClient = DefaultDockerClient.builder().apiVersion('v1.17').uri(host).build()
+            this.originalDockerClient = this.dockerClient
+            if (host) {
+                host = 'http://' + host
+                this.dockerClient = DefaultDockerClient.builder().apiVersion('v1.17').uri(host).build()
+            }
+        } catch (Exception e) {
+            log.error("Impossible to start private network!", e)
         }
     }
 
@@ -126,7 +130,7 @@ class KomposerRunner {
                             log.info("$containerName: ${StandardCharsets.US_ASCII.decode(logs.next().content()).toString()}")
                         }
                     } catch (Exception e) {
-                        log.error("Impossible to start logging thread", e)
+                        log.warn("Impossible to start logging thread")
                     }
                 }
 

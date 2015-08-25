@@ -8,11 +8,11 @@ import com.zenvia.komposer.runner.KomposerRunner
  * @since 6/11/15
  */
 class Komposition {
-    private final String containerId
-    private final String containerName
-    private final ContainerInfo containerInfo
-    private final Boolean removeVolumes = true
-    private final KomposerRunner runner
+    String containerId
+    String containerName
+    ContainerInfo containerInfo
+    Boolean removeVolumes = true
+    KomposerRunner runner
 
     public Komposition(args) {
         this.containerId = args.containerId

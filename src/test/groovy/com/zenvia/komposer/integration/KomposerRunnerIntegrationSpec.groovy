@@ -1,12 +1,14 @@
 package com.zenvia.komposer.integration
 
 import com.zenvia.komposer.runner.KomposerRunner
+import groovy.util.logging.Slf4j
 import spock.lang.Ignore
 import spock.lang.Specification
 
 /**
  * @author Tiago de Oliveira
  * */
+@Slf4j
 class KomposerRunnerIntegrationSpec extends Specification {
 
     def runner, containers
@@ -28,7 +30,7 @@ class KomposerRunnerIntegrationSpec extends Specification {
         and: 'a private network to be bonding the containers together'
             runner.privateNetworkStatus().contains('weave proxy is running')
         when: 'I try to connect from one container to another using the private network'
-            def execLogs = runner.exec(containers.get('machine01').containerId, ['ping', '-c', '4', 'machine02'])
+            def execLogs = containers.machine01.exec(['ping', '-c', '4', 'machine02'])
         then: 'the containers should resolving the hostname and connecting to each other'
             execLogs.contains('PING machine02.weave.local')
             execLogs.contains('machine02.weave.local ping statistics')

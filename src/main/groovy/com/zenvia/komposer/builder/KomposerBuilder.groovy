@@ -208,7 +208,7 @@ class KomposerBuilder {
                     String progress = message.progress()
                     progress ?: ""
 
-                    log.info(sprintf("%s: %s %s%n", [id, message.status(), progress]))
+                    log.info(sprintf("%s: %s %s%n", [ID, message.status(), progress]))
                 } else {
 
                     String value = message.stream()
