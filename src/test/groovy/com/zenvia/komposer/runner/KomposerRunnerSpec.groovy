@@ -38,6 +38,25 @@ class KomposerRunnerSpec extends Specification {
             result.sender.containerInfo == info
     }
 
+    def "up with force pull"() {
+        given:
+            def file = 'src/test/resources/docker-compose.yml'
+            def creation = new ContainerCreation()
+            creation.id = '9998877'
+            def info = new ContainerInfo()
+            def stream = Mock(LogStream)
+        when:
+            dockerClient.createContainer(_, _) >> creation
+            dockerClient.inspectContainer(creation.id) >> info
+            dockerClient.logs(_, _) >> stream
+            def result = runner.up(file, true, true)
+        then:
+            result
+            result.sender.containerId == services.sender.containerId
+            result.sender.containerName.contains(services.sender.containerName)
+            result.sender.containerInfo == info
+    }
+
     def "down"() {
         when:
             runner.down(services)

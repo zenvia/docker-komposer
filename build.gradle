@@ -1,5 +1,5 @@
 group 'com.zenvia.komposer'
-version '1.2.1'
+version '1.2.2'
 
 apply plugin: 'groovy'
 apply plugin: 'jacoco'
@@ -36,7 +36,7 @@ dependencies {
     compile group: 'junit', name: 'junit', version: '4.11'
 
     testCompile "org.spockframework:spock-core:1.0-groovy-2.4"
-    testCompile 'com.athaydes:spock-reports:1.2.5'
+    testCompile 'com.athaydes:spock-reports:1.2.7'
 
     testRuntime 'cglib:cglib-nodep:3.1'
     testRuntime group: 'ch.qos.logback', name:'logback-classic', version: '1.0.0'

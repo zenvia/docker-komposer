@@ -24,7 +24,7 @@ class KomposerRunner {
     private DefaultDockerClient dockerClient
     private DefaultDockerClient originalDockerClient
     private final KomposerBuilder komposerBuilder
-    private static final SECONDDS_TO_KILL = 10
+    private static final SECONDS_TO_KILL = 10
     private host
     private final privateNetwork
     private networkSetup
@@ -90,7 +90,7 @@ class KomposerRunner {
         return this.dockerClient.listContainers(DockerClient.ListContainersParam.allContainers())
     }
 
-    def up(String composeFile, Boolean pull = true) {
+    def up(String composeFile, Boolean pull = true, Boolean forcePull = false) {
         composeFile ?: 'docker-compose.yml'
 
         def file = new File(composeFile)
@@ -98,7 +98,7 @@ class KomposerRunner {
 
             log.info("Starting services on ${composeFile}")
 
-            def configs = this.komposerBuilder.build(file, pull)
+            def configs = this.komposerBuilder.build(file, pull, forcePull)
 
             def result = [:]
             configs.each { config ->
@@ -114,7 +114,7 @@ class KomposerRunner {
                 def creation = this.dockerClient.createContainer(containerConfig, containerName)
 
                 log.info("[$containerName] Starting container...")
-                dockerClient.startContainer(creation.id)
+                this.dockerClient.startContainer(creation.id)
 
                 log.info("[$containerName] Gathering container info...")
                 def info = this.dockerClient.inspectContainer(creation.id)
@@ -182,14 +182,14 @@ class KomposerRunner {
     }
 
     def stop(containerID) {
-        this.dockerClient.stopContainer(containerID, SECONDDS_TO_KILL)
-        Thread.sleep(SECONDDS_TO_KILL * 1000 + 2000)
+        this.dockerClient.stopContainer(containerID, SECONDS_TO_KILL)
+        Thread.sleep(SECONDS_TO_KILL * 1000 + 2000)
         return this.dockerClient.inspectContainer(containerID)
     }
 
     def start(containerID) {
         this.dockerClient.startContainer(containerID)
-        Thread.sleep(SECONDDS_TO_KILL * 1000)
+        Thread.sleep(SECONDS_TO_KILL * 1000)
         return this.dockerClient.inspectContainer(containerID)
     }
 

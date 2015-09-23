@@ -32,7 +32,7 @@ class KomposerBuilder {
         this.client = client
     }
 
-    def build(File composeFile, pull = true) {
+    def build(File composeFile, pull = true, forcePull = false) {
         log.info("Building containers from ${composeFile.absolutePath}")
 
         def prefix = Paths.get(composeFile.absolutePath).parent.fileName
@@ -47,7 +47,7 @@ class KomposerBuilder {
 
             log.info "Processing service: $service"
 
-            def containerConfig = this.createContainerConfig(it.value, service, namePattern, pull)
+            def containerConfig = this.createContainerConfig(it.value, service, namePattern, pull, forcePull)
             def hostConfig = this.createHostConfig(it.value, namePattern)
             def containerName = sprintf(namePattern, [service])
 
@@ -57,14 +57,14 @@ class KomposerBuilder {
         return result
     }
 
-    def ContainerConfig createContainerConfig(service, serviceName, namePattern, pull = true) {
+    def ContainerConfig createContainerConfig(service, serviceName, namePattern, pull = true, Boolean forcePull = false) {
         log.info("Creating container config for [${serviceName}], pullImage = ${pull}")
 
         def builder = ContainerConfig.builder()
 
         def imageName = service.image
         if (imageName && pull) {
-            this.pullImage(imageName)
+            this.pullImage(imageName, forcePull)
         } else if (service.build) {
             imageName = this.buildImage(service.build, serviceName, namePattern)
         }
@@ -189,7 +189,7 @@ class KomposerBuilder {
         return builder.build()
     }
 
-    def pullImage(String image) {
+    def pullImage(String image, Boolean forcePull = false) {
         if (!image.contains(':')) {
             image += ':latest'
         }
@@ -226,7 +226,7 @@ class KomposerBuilder {
         }
 
         def hasImageLocal = this.client.listImages().findAll { it.repoTags.toString().contains(image) }
-        if (!hasImageLocal) {
+        if (!hasImageLocal || forcePull) {
             try {
                 if (this.hubLogin && this.hubLogin.user) {
                     log.info("Pulling image [${image}] using authentication...")

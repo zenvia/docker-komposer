@@ -15,9 +15,12 @@ class KomposerRuleSpec extends Specification {
     static KomposerRule rule
 
     def setupSpec() {
-        def composeFile = 'src/test/resources/docker-compose-test.yml'
-        def cfgFile = 'src/test/resources/docker.properties'
-        rule = new KomposerRule(composeFile, cfgFile, false)
+        def options = [
+                compose: 'src/test/resources/docker-compose-test.yml',
+                dockerCfg: 'src/test/resources/docker.properties'
+        ]
+
+        rule = new KomposerRule(options)
     }
 
     def "getContainers"() {
