@@ -158,7 +158,6 @@ class KomposerRunner {
         }
 
         if (this.privateNetwork) {
-            this.dockerClient.close()
             this.dockerClient = this.originalDockerClient
             this.networkSetup.stop(this.dockerClient)
         }
