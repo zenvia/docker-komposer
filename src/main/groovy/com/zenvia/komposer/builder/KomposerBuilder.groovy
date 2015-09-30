@@ -32,7 +32,7 @@ class KomposerBuilder {
         this.client = client
     }
 
-    def build(File composeFile, pull = true, forcePull = false) {
+    def build(File composeFile, Integer maxAttempts, pull = true, forcePull = false) {
         log.info("Building containers from ${composeFile.absolutePath}")
 
         def prefix = Paths.get(composeFile.absolutePath).parent.fileName
@@ -47,7 +47,7 @@ class KomposerBuilder {
 
             log.info "Processing service: $service"
 
-            def containerConfig = this.createContainerConfig(it.value, service, namePattern, pull, forcePull)
+            def containerConfig = this.createContainerConfig(it.value, service, namePattern, maxAttempts, pull, forcePull)
             def hostConfig = this.createHostConfig(it.value, namePattern)
             def containerName = sprintf(namePattern, [service])
 
@@ -57,14 +57,14 @@ class KomposerBuilder {
         return result
     }
 
-    def ContainerConfig createContainerConfig(service, serviceName, namePattern, pull = true, Boolean forcePull = false) {
+    def ContainerConfig createContainerConfig(service, serviceName, namePattern, Integer maxAttempts, pull = true, Boolean forcePull = false) {
         log.info("Creating container config for [${serviceName}], pullImage = ${pull}")
 
         def builder = ContainerConfig.builder()
 
         def imageName = service.image
         if (imageName && pull) {
-            this.pullImage(imageName, forcePull)
+            this.pullImage(imageName, maxAttempts, forcePull)
         } else if (service.build) {
             imageName = this.buildImage(service.build, serviceName, namePattern)
         }
@@ -189,7 +189,7 @@ class KomposerBuilder {
         return builder.build()
     }
 
-    def pullImage(String image, Boolean forcePull = false) {
+    def pullImage(String image, Integer maxAttempts, Boolean forcePull = false) {
         if (!image.contains(':')) {
             image += ':latest'
         }
@@ -227,6 +227,15 @@ class KomposerBuilder {
 
         def hasImageLocal = this.client.listImages().findAll { it.repoTags.toString().contains(image) }
         if (!hasImageLocal || forcePull) {
+            pull(image, progress, maxAttempts)
+        }
+    }
+
+    def pull(String image, ProgressHandler progress, Integer maxAttempts) {
+        Integer attempts = 1;
+        Exception lastException = null
+
+        while(attempts <= maxAttempts) {
             try {
                 if (this.hubLogin && this.hubLogin.user) {
                     log.info("Pulling image [${image}] using authentication...")
@@ -236,12 +245,20 @@ class KomposerBuilder {
                     log.info("Pulling image [${image}] without auth...")
                     this.client.pull(image, progress)
                 }
+
+                return
             } catch (Exception e) {
-                def message = "Impossible to pull the image from repository, please do it manually"
-                log.error(message, e)
-                throw new DockerException(message, e)
+                lastException = e
+                def message = "Image cannot be pulled from repository. Attempt [${attempts}] of [${maxAttempts}]"
+                log.warn(message)
+                attempts++
+                Thread.sleep(3000)
             }
         }
+
+        def message = "Impossible to pull the image from repository, please do it manually"
+        log.error(message, lastException)
+        throw new DockerException(message, lastException)
     }
 
     def buildImage(path, serviceName, namePatterm) {

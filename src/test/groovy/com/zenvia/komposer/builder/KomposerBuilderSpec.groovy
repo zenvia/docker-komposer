@@ -1,6 +1,8 @@
 package com.zenvia.komposer.builder
 
 import com.spotify.docker.client.DockerClient
+import com.spotify.docker.client.DockerException
+import com.spotify.docker.client.ProgressHandler
 import groovy.util.logging.Log
 import spock.lang.Specification
 
@@ -12,12 +14,13 @@ class KomposerBuilderSpec extends Specification {
 
     def client = Mock(DockerClient)
     def builder = new KomposerBuilder(client)
+    def maxAttempts = 5
 
     def 'create container config with all parameters'() {
         given:
             def service = [image: 'mysql', expose: ['3000', '3001/tcp', '3002/udp'], environment: ['HEY=HELLO'], volumes: ['/var/lib/test'], command: 'echo test']
         when:
-            def response = builder.createContainerConfig(service, 'test', 'komposer_%s_1')
+            def response = builder.createContainerConfig(service, 'test', 'komposer_%s_1', maxAttempts)
         then:
             response
             response.image() == service.image
@@ -32,7 +35,7 @@ class KomposerBuilderSpec extends Specification {
         given:
             def service = [image: 'mysql']
         when:
-            def response = builder.createContainerConfig(service, 'test', 'komposer_%s_1')
+            def response = builder.createContainerConfig(service, 'test', 'komposer_%s_1', maxAttempts)
         then:
             response
             response.image() == service.image
@@ -46,7 +49,7 @@ class KomposerBuilderSpec extends Specification {
         given:
             def service = [build: '.', expose: ['3000', '3001/tcp', '3002/udp'], environment: ['HEY=HELLO'], volumes: ['/var/lib/test'], command: 'echo test']
         when:
-            def response = builder.createContainerConfig(service, 'test', 'komposer_%s_1')
+            def response = builder.createContainerConfig(service, 'test', 'komposer_%s_1', maxAttempts)
         then:
             response
             response.image() == 'komposer_test_1'
@@ -89,7 +92,7 @@ class KomposerBuilderSpec extends Specification {
         given:
             def file = new File('src/test/resources/docker-compose.yml')
         when:
-            def response = builder.build(file)
+            def response = builder.build(file, maxAttempts)
         then:
             response
             response.provider
@@ -102,6 +105,22 @@ class KomposerBuilderSpec extends Specification {
 //            response.provider.host.portBindings().get('40084')[0].hostIp == '0.0.0.0'
 //            response.provider.host.links[0].contains('komposer_resources_receiver_')
 //            response.sender.container.exposedPorts.toArray().contains('40081/tcp')
+    }
+
+    def 'pull'() {
+        given:
+            String image = 'tiagodeoliveira/micro-arch-provider'
+            def progressHandler = Mock(ProgressHandler)
+            Integer maxAttempts = 5
+            def success = true
+        when:
+            try {
+                builder.pull(image, progressHandler, maxAttempts)
+            } catch (DockerException e) {
+                success = false
+            }
+        then:
+            success
     }
 
 }

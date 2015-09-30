@@ -90,7 +90,7 @@ class KomposerRunner {
         return this.dockerClient.listContainers(DockerClient.ListContainersParam.allContainers())
     }
 
-    def up(String composeFile, Boolean pull = true, Boolean forcePull = false) {
+    def up(String composeFile, Integer maxAttempts, Boolean pull = true, Boolean forcePull = false) {
         composeFile ?: 'docker-compose.yml'
 
         def file = new File(composeFile)
@@ -98,7 +98,7 @@ class KomposerRunner {
 
             log.info("Starting services on ${composeFile}")
 
-            def configs = this.komposerBuilder.build(file, pull, forcePull)
+            def configs = this.komposerBuilder.build(file, maxAttempts, pull, forcePull)
 
             def result = [:]
             configs.each { config ->

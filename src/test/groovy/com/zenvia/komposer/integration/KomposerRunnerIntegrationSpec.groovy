@@ -8,12 +8,12 @@ import spock.lang.Specification
 /**
  * @author Tiago de Oliveira
  * */
+@Ignore
 @Slf4j
 class KomposerRunnerIntegrationSpec extends Specification {
 
     def runner, containers
 
-    @Ignore
     def "start a container with a private network and leave the room clean when getting out"() {
         given: 'a compose file with two containers without any link between'
             def privateNetwork = true
