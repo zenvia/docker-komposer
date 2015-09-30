@@ -108,18 +108,18 @@ class KomposerBuilderSpec extends Specification {
     }
 
     def 'pull'() {
-        given:
+        given: 'an image, a progressa handler and 5 as max attempts'
             String image = 'tiagodeoliveira/micro-arch-provider'
             def progressHandler = Mock(ProgressHandler)
             Integer maxAttempts = 5
             def success = true
-        when:
+        when: 'pull the image with the given parameters'
             try {
                 builder.pull(image, progressHandler, maxAttempts)
             } catch (DockerException e) {
                 success = false
             }
-        then:
+        then: 'should not return error'
             success
     }
 

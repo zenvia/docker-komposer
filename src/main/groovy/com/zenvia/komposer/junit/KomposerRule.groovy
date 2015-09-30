@@ -26,7 +26,7 @@ class KomposerRule extends ExternalResource {
 
     def KomposerRule(String compose, KomposerRunner runner) {
         this.runner = runner
-        this.composeFile = composeFile
+        this.composeFile = compose
     }
 
     def KomposerRule(options = []) {

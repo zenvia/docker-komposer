@@ -18,6 +18,7 @@ sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
 test {
+    dependsOn codenarcTest
     testLogging.showStandardStreams = true
     outputs.upToDateWhen { false }
     finalizedBy jacocoTestReport
