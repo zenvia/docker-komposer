@@ -235,7 +235,7 @@ class KomposerBuilder {
         Integer attempts = 1;
         Exception lastException = null
 
-        while(attempts <= maxAttempts) {
+        while (attempts <= maxAttempts) {
             try {
                 if (this.hubLogin && this.hubLogin.user) {
                     log.info("Pulling image [${image}] using authentication...")
