@@ -14,6 +14,7 @@ class KomposerRunnerSpec extends Specification {
     DefaultDockerClient dockerClient = Mock(constructorArgs: [DefaultDockerClient.fromEnv()])
     def runner = new KomposerRunner(dockerClient)
     def services = ['sender': [containerId: '9998877', containerName: 'komposer_resources_sender_']]
+    def maxAttempts = 5
 
     def setup() {
         runner.host = 'http://teste:5656'
@@ -30,7 +31,7 @@ class KomposerRunnerSpec extends Specification {
             dockerClient.createContainer(_, _) >> creation
             dockerClient.inspectContainer(creation.id) >> info
             dockerClient.logs(_, _) >> stream
-            def result = runner.up(file)
+            def result = runner.up(file, maxAttempts)
         then:
             result
             result.sender.containerId == services.sender.containerId
@@ -49,7 +50,7 @@ class KomposerRunnerSpec extends Specification {
             dockerClient.createContainer(_, _) >> creation
             dockerClient.inspectContainer(creation.id) >> info
             dockerClient.logs(_, _) >> stream
-            def result = runner.up(file, true, true)
+            def result = runner.up(file, maxAttempts, true, true)
         then:
             result
             result.sender.containerId == services.sender.containerId
