@@ -57,7 +57,7 @@ class KomposerNetworkSetup {
     def getHost(dockerClient) {
         def container = createNetworkAdminContainer('proxy-env', extractHost(dockerClient))
         def logs = startAdminContainer(container, dockerClient)
-        def hostMatcher = (logs.split('\n').last() =~ /(?:[0-9]{1,3}\.){3}[0-9]{1,3}.*/)
+        def hostMatcher = (logs.split('\n').last() =~ /localhost:\d{1,5}|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}/)
         def host
         if (hostMatcher.size() > 0) {
             host = hostMatcher[0]

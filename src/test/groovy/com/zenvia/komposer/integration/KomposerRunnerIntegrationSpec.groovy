@@ -2,18 +2,18 @@ package com.zenvia.komposer.integration
 
 import com.zenvia.komposer.runner.KomposerRunner
 import groovy.util.logging.Slf4j
-import spock.lang.Ignore
 import spock.lang.Specification
 
 /**
  * @author Tiago de Oliveira
  * */
-@Ignore
 @Slf4j
 class KomposerRunnerIntegrationSpec extends Specification {
 
     def runner, containers
+    def maxAttempts = 5
 
+    // OBS: docker rm -vf $(docker ps -qa)
     def "start a container with a private network and leave the room clean when getting out"() {
         given: 'a compose file with two containers without any link between'
             def privateNetwork = true
@@ -22,7 +22,7 @@ class KomposerRunnerIntegrationSpec extends Specification {
         when: 'I create a komposerRunner with a private network'
             runner = new KomposerRunner(dockerConfigFile, privateNetwork)
         and: 'I start the runner'
-            containers = runner.up(dockerComposeFile, true)
+            containers = runner.up(dockerComposeFile, maxAttempts, true)
         then: 'I expect the containers to be created'
             containers
         and: 'the docker client to be running with the new proxy server'
@@ -56,5 +56,4 @@ class KomposerRunnerIntegrationSpec extends Specification {
             log.error("Error on clean up ", e)
         }
     }
-
 }
