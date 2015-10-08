@@ -63,9 +63,11 @@ artifacts {
 gradle.taskGraph.whenReady { taskGraph ->
     if (taskGraph.allTasks.any { it instanceof Sign }) {
         allprojects {
-            ext."signing.password" = System.getenv('ENCRYPTION_PASSWORD')
             if (!ext."signing.password") {
-                ext."signing.password" = System.getProperty('ENCRYPTION_PASSWORD')
+                ext."signing.password" = System.getenv('ENCRYPTION_PASSWORD')
+                if (!ext."signing.password") {
+                    ext."signing.password" = System.getProperty('ENCRYPTION_PASSWORD')
+                }
             }
         }
     }
