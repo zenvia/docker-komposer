@@ -6,3 +6,4 @@ komposer.iws
 docker-komposer.iml
 .idea
 .idea/*
+.crypto/secring.gpg
