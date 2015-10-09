@@ -73,23 +73,8 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
-
 signing {
     sign configurations.archives
-}
-
-ext {
-
-    ossrhUsername = System.getenv('NEXUS_USER')
-    ossrhPassword = System.getenv('NEXUS_PASS')
-
-    if (!ossrhPassword) {
-        ossrhPassword = System.getProperty('NEXUS_PASS')
-    }
-
-    if (!ossrhUsername) {
-        ossrhUsername = System.getProperty('NEXUS_USER')
-    }
 }
 
 uploadArchives {
@@ -98,11 +83,11 @@ uploadArchives {
             beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
             repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
+                authentication(userName: ossUsername, password: ossPassword)
             }
 
             snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
+                authentication(userName: ossUsername, password: ossPassword)
             }
 
             pom.project {
