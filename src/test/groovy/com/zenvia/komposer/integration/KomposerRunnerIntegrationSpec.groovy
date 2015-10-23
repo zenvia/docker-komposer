@@ -2,11 +2,13 @@ package com.zenvia.komposer.integration
 
 import com.zenvia.komposer.runner.KomposerRunner
 import groovy.util.logging.Slf4j
+import spock.lang.Ignore
 import spock.lang.Specification
 
 /**
  * @author Tiago de Oliveira
  * */
+@Ignore
 @Slf4j
 class KomposerRunnerIntegrationSpec extends Specification {
 
@@ -44,6 +46,86 @@ class KomposerRunnerIntegrationSpec extends Specification {
             runner.privateNetworkStatus().contains('weave container is not present. Have you launched it?')
         and: 'the docker client to be using the real host'
             runner.dockerClient.uri.authority.split(':').last() != '12375'
+    }
+
+    def 'option cleanup true without private network'() {
+        given: 'I have a previous active container due to unknown reason'
+            def dockerConfigFile = 'src/test/resources/docker.properties'
+            def dockerComposeFile = 'src/test/resources/docker-compose-test.yml'
+            ['/bin/sh', '-c', 'docker run mongo'].execute()
+            sleep(1000)
+        when: 'I want to cleanup the containers'
+            runner = new KomposerRunner(dockerConfigFile, false, true)
+            def list = runner.dockerClient.listContainers()
+            assert list.size() == 0
+            containers = runner.up(dockerComposeFile, maxAttempts, true)
+            list = runner.dockerClient.listContainers()
+            assert list.size() == 2
+            runner.cleanupContainers(list)
+            list = runner.dockerClient.listContainers()
+        then: 'should have no containers'
+            list.size() == 0
+    }
+
+    def 'option cleanup false without private network'() {
+        given: 'I have a previous active container due to unknown reason'
+            def dockerConfigFile = 'src/test/resources/docker.properties'
+            def dockerComposeFile = 'src/test/resources/docker-compose-test.yml'
+            ['/bin/sh', '-c', 'docker run mongo'].execute()
+            sleep(1000)
+        when: 'I don\'t want to cleanup the containers'
+            runner = new KomposerRunner(dockerConfigFile, false, false)
+            def list = runner.dockerClient.listContainers()
+            assert list.size() == 1
+            containers = runner.up(dockerComposeFile, maxAttempts, true)
+            list = runner.dockerClient.listContainers()
+            assert list.size() == 3
+            runner.cleanupContainers(list)
+            list = runner.dockerClient.listContainers()
+        then: 'should have no containers'
+            list.size() == 0
+    }
+
+    def 'option cleanup true with private network'() {
+        given: 'I have a previous active container due to unknown reason'
+            def dockerConfigFile = 'src/test/resources/docker.properties'
+            def dockerComposeFile = 'src/test/resources/docker-compose-test.yml'
+            ['/bin/sh', '-c', 'docker run mongo'].execute()
+            sleep(1000)
+        when: 'I want to cleanup the containers'
+            runner = new KomposerRunner(dockerConfigFile, true, true)
+            def list = runner.dockerClient.listContainers()
+            assert list.size() == 3
+            containers = runner.up(dockerComposeFile, maxAttempts, true)
+            list = runner.dockerClient.listContainers()
+            assert list.size() == 5
+            runner.cleanupContainers(list)
+            sleep(1000)
+            list = runner.originalDockerClient.listContainers()
+            runner = false
+        then: 'should have no containers'
+            list.size() == 0
+    }
+
+    def 'option cleanup false with private network'() {
+        given: 'I have a previous active container due to unknown reason'
+            def dockerConfigFile = 'src/test/resources/docker.properties'
+            def dockerComposeFile = 'src/test/resources/docker-compose-test.yml'
+            ['/bin/sh', '-c', 'docker run mongo'].execute()
+            sleep(1000)
+        when: 'I don\'t want to cleanup the containers'
+            runner = new KomposerRunner(dockerConfigFile, true, false)
+            def list = runner.dockerClient.listContainers()
+            assert list.size() == 4
+            containers = runner.up(dockerComposeFile, maxAttempts, true)
+            list = runner.dockerClient.listContainers()
+            assert list.size() == 6
+            runner.cleanupContainers(list)
+            sleep(1000)
+            list = runner.originalDockerClient.listContainers()
+            runner = false
+        then: 'should have no containers'
+            list.size() == 0
     }
 
     def cleanup() {

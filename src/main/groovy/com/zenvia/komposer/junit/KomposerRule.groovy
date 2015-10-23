@@ -17,6 +17,7 @@ class KomposerRule extends ExternalResource {
     private final privateNetwork = false
     private final forcePull = false
     private final maxAttempts = 5
+    private final cleanup = true
 
     def KomposerRule(String compose, Boolean pull = true) {
         this.runner = new KomposerRunner()
@@ -37,7 +38,8 @@ class KomposerRule extends ExternalResource {
             pull:           true,
             privateNetwork: false,
             forcePull:      false,
-            maxAttempts:    5
+            maxAttempts:    5,
+            cleanup:        true
         ]
 
         options = defaultOptions << options;
@@ -48,8 +50,9 @@ class KomposerRule extends ExternalResource {
         this.privateNetwork = options.privateNetwork;
         this.forcePull = options.forcePull;
         this.maxAttempts = options.maxAttempts;
+        this.cleanup = options.cleanup;
 
-        this.runner = new KomposerRunner(this.dockerCfg, this.privateNetwork)
+        this.runner = new KomposerRunner(this.dockerCfg, this.privateNetwork, this.cleanup)
     }
 
     @Override
