@@ -13,7 +13,7 @@ Import the project [dependecy from maven](http://search.maven.org/#search%7Cgav%
 Create the Rule object:
 
 ```java
-    @ClassRule public static KomposerRule container = new KomposerRule("docker-compose-test.yml", "docker.properties", false); // to not execute pull, broken yet :( !!!
+    @ClassRule public static KomposerRule container = new KomposerRule("docker-compose-test.yml", "docker.properties", false); 
     container.getContainers().get("serviceName").getContainerInfo(); // returns the container inspect from docker
 ```    
 Other option to start your compose:
