@@ -39,7 +39,7 @@ class KomposerRunner {
         this.komposerBuilder = new KomposerBuilder(dockerClient)
     }
 
-    def KomposerRunner(String dockerCfgFile, privateNetwork = false) {
+    def KomposerRunner(String dockerCfgFile, privateNetwork = false, cleanup = true) {
 
         def props = new Properties()
         new File(dockerCfgFile).withInputStream {
@@ -55,6 +55,10 @@ class KomposerRunner {
 
         log.info("Connecting to [${host}] using certificates from [${certPath}]")
         this.dockerClient = DefaultDockerClient.builder().apiVersion('v1.17').uri(host).dockerCertificates(certificates).build()
+
+        if (cleanup) {
+            cleanupContainers(this.dockerClient.listContainers());
+        }
 
         if (privateNetwork) {
             this.privateNetwork = privateNetwork
@@ -211,5 +215,44 @@ class KomposerRunner {
 
     def URI getHostUri() {
         return new URI(this.host)
+    }
+
+    def cleanupContainers(services) {
+        services.each { service ->
+            String containerId = service.id
+            String containerName = service.image
+
+            if (containerName.contains("weave")) {
+                return
+            }
+
+            log.info("Stopping active container [${containerId} - ${containerName}]")
+            try {
+                this.dockerClient.killContainer(containerId)
+                this.dockerClient.removeContainer(containerId)
+            } catch (Exception e) {
+                log.error("Error stopping docker container $containerName", e)
+            }
+        }
+
+        new KomposerNetworkSetup().stop(this.dockerClient);
+        rmAll(this.originalDockerClient);
+    }
+
+    def rmAll(DockerClient dockerClient) {
+        if (!dockerClient) {
+            return
+        }
+
+        def networkServices = dockerClient.listContainers(DockerClient.ListContainersParam.allContainers());
+
+        networkServices.each { networkService ->
+            try {
+                dockerClient.waitContainer(networkService.id)
+                dockerClient.removeContainer(networkService.id)
+            } catch (Exception e) {
+                log.info("Container $networkService.id already removed!")
+            }
+        }
     }
 }
